@@ -1,6 +1,8 @@
 <template>
   <div class="hello">
-    Current State : {{ machineCurrentState.value }}
+    Current State : {{ machineCurrentState.value || "Leading"}}
+    <br/>
+    ERROR : {{machineCurrentContext.errors}}
     <hr />
     <p>Supported State Transitions</p>
     <div v-for="(action, idx) in actions" :key="action">
@@ -11,10 +13,36 @@
 
 <script>
 import { interpret } from "xstate";
-import { leadTransitionMachine } from "../stateMachines/leadTransitionMachine";
+import { leadStateTransitionMachineFactory, defaultGuards } from "../stateMachines/leadTransitionMachine";
+
 export default {
   name: "HelloWorld",
-  created() {
+  data() {
+    return {
+      //Machine
+      leadTransitionMachine :{},
+
+      // Interpret the machine and store it in data
+      leadStateTransitionService: {},
+
+      // Start with the machine's initial state
+      machineCurrentState: {},
+
+      // Start with the machine's initial context
+      machineCurrentContext: {},
+    };
+  },
+  mounted(){
+    var lead = {
+      lodgementChecklistCompleted : true
+    }
+    // create the machine
+    this.leadTransitionMachine = leadStateTransitionMachineFactory(lead,defaultGuards);
+
+    // register the interpreter service
+    this.leadStateTransitionService = interpret(this.leadTransitionMachine);
+    
+    // register on transition event handler (to update state values)
     this.leadStateTransitionService
       .onTransition((state) => {
         // Update the current state component data property with the next state
@@ -23,23 +51,17 @@ export default {
         this.machineCurrentContext = state.context;
       })
       .start();
-  },
-  data() {
-    return {
-      // Interpret the machine and store it in data
-      leadStateTransitionService: interpret(leadTransitionMachine),
 
-      // Start with the machine's initial state
-      machineCurrentState: leadTransitionMachine.initialState,
-
-      // Start with the machine's initial context
-      machineCurrentContext: leadTransitionMachine.context,
-    };
+  },unmounted(){
+    this.leadStateTransitionService.stop()
   },
   computed: {
     actions() {
-      return leadTransitionMachine.config.states[this.machineCurrentState.value]
+      // Make sure machine is initialized
+      if(this.leadTransitionMachine && this.leadTransitionMachine.config)
+        return this.leadTransitionMachine.config.states[this.machineCurrentState.value]
         .on;
+      return {}
     },
   },
   methods: {
