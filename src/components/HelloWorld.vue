@@ -8,6 +8,11 @@
     <div v-for="(action, idx) in actions" :key="action">
       <button v-on:click="send(idx)">{{ idx }}</button>
     </div>
+
+    <hr/>
+    <p>Guard variables</p>
+    <input type="checkbox" id="checkbox" v-model="lead.lodgementChecklistCompleted">
+    <label for="checkbox">lodgementChecklistCompleted </label><span>(without this checked you wont be able to move from Qualified to Lodged)</span>
   </div>
 </template>
 
@@ -30,14 +35,14 @@ export default {
 
       // Start with the machine's initial context
       machineCurrentContext: {},
+      lead :{
+        lodgementChecklistCompleted : false
+      }
     };
   },
   mounted(){
-    var lead = {
-      lodgementChecklistCompleted : true
-    }
     // create the machine
-    this.leadTransitionMachine = leadStateTransitionMachineFactory(lead,defaultGuards);
+    this.leadTransitionMachine = leadStateTransitionMachineFactory(this.lead,defaultGuards);
 
     // register the interpreter service
     this.leadStateTransitionService = interpret(this.leadTransitionMachine);
@@ -54,6 +59,11 @@ export default {
 
   },unmounted(){
     this.leadStateTransitionService.stop()
+  },
+  watch:{
+    lead : function (value){
+      this.leadTransitionMachine.assign(value);
+    }
   },
   computed: {
     actions() {

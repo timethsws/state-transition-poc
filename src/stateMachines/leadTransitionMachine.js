@@ -161,7 +161,7 @@ export const leadStateTransitionMachineFactory = (lead, guards) => {
 export const defaultGuards = {
 	DefaultGuard: (lead) => lead,
 	LodgedGuard: (lead) => {
-		alert("lodge guard triggered")
+		// alert("lodge guard triggered")
 		return lead.lodgementChecklistCompleted
 	}
 }
